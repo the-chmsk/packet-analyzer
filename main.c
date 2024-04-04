@@ -17,10 +17,9 @@ int main(int argc, char *argv[]) {
       {0,           0,                 0,    0  }
   };
 
-  int c;
   int option_index = 0;
-  while ((c = getopt_long(argc, argv, "hi:p:tu01234", long_options,
-                          &option_index)) != -1) {
+  for (int c; (c = getopt_long(argc, argv, "hi:p:tu01234", long_options,
+                               &option_index)) != -1;) {
     // TODO: Implement option parsing
   }
 
