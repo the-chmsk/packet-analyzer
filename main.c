@@ -14,7 +14,7 @@ int main(int argc, char *argv[]) {
       {"icmp6",     no_argument,       0,    0  },
       {"igmp",      no_argument,       0,    0  },
       {"mld",       no_argument,       0,    0  },
-      {0,           0,                 0,    0  }
+      {0,           0,                 0,    0  },
   };
 
   int option_index = 0;
