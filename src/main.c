@@ -7,6 +7,13 @@ void list_interfaces() {
   // TODO: Print list of available interfaces
 }
 
+void print_help(char *name) {
+  printf("Usage: %s [-i interface | --interface interface] "
+         "{-p|--port-source|--port-destination port [--tcp|-t] [--udp|-u]} "
+         "[--arp] [--ndp] [--icmp4] [--icmp6] [--igmp] [--mld] {-n num}\n",
+         name);
+}
+
 int main(int argc, char *argv[]) {
 
   // If thre's no option specified, list available interfaces.
@@ -36,7 +43,14 @@ int main(int argc, char *argv[]) {
   int option_index = 0;
   for (int c; (c = getopt_long(argc, argv, "hi:p:tu01234", long_options,
                                &option_index)) != -1;) {
-    // TODO: Implement option parsing
+    switch (c) {
+    case 'h':
+      print_help(argv[0]);
+      break;
+
+    default:
+      break;
+    }
   }
 
   return EXIT_SUCCESS;
