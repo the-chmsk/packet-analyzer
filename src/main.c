@@ -3,7 +3,22 @@
 #include <stdlib.h>
 #include <string.h>
 
+
+
+void list_interfaces() {
+  // TODO: Print list of available interfaces
+}
+
 int main(int argc, char *argv[]) {
+
+  // If thre's no option specified, list available interfaces.
+  if (argc == 1)
+    list_interfaces();
+
+  // If there's only interface with no value specified, list available interfaces.
+  if (argc == 2 && (strcmp("-i", argv[0]) == 0 || strcmp("--interface", argv[0]) == 0))
+    list_interfaces();
+
   static const struct option long_options[] = {
       {"help",      no_argument,       NULL, 'h'},
       {"interface", required_argument, NULL, 'i'},

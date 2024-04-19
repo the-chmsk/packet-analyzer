@@ -1,0 +1,10 @@
+# Compiled object files
+*.o
+
+# Editor files
+.vscode
+
+# Build output
+build/
+bin/
+obj/
