@@ -1,14 +1,29 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -g -lpcap
+
 TARGET = packet-analyzer
-SRCS = main.h
-OBJS = $(SRCS:.h=.o)
+
+SDIR = src
+ODIR = obj
+BDIR = bin
+
+SRCS := $(wildcard $(SDIR)/*.c $(SDIR)/*.h)
+OBJS :=  $(patsubst $(SDIR)/%.c, $(ODIR)/%.o, $(wildcard $(SDIR)/*.c)) 
 
 all: $(TARGET)
 
+$(TARGET): $(OBJS)
+	mkdir -p $(BDIR)
+	$(CC) $(CFLAGS) -o bin/$@ $^
 
-%.o: %.c
+$(ODIR)/%.o: $(SDIR)/%.c
+	mkdir -p $(ODIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
+dir:
+	mkdir -p $(ODIR)
+
 clean:
-	rm -f $(OBJS) $(TARGET)
+	rm -rf $(ODIR) $(BDIR)
+
+.PHONY: all clean
