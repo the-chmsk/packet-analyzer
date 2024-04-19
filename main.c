@@ -1,4 +1,7 @@
-#include "main.h"
+#include <getopt.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 int main(int argc, char *argv[]) {
   static const struct option long_options[] = {
