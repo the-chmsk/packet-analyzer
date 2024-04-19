@@ -1,8 +1,8 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -g
+CFLAGS = -Wall -Wextra -g -lpcap
 TARGET = packet-analyzer
-SRCS = main.c
-OBJS = $(SRCS:.c=.o)
+SRCS = main.h
+OBJS = $(SRCS:.h=.o)
 
 all: $(TARGET)
 
