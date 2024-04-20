@@ -95,10 +95,6 @@ int main(int argc, char *argv[]) {
       filter.mld = true;
       break;
     case 'n':
-      if (!optarg) {
-        fprintf(stderr, "%s", optarg);
-        return EXIT_FAILURE;
-      }
       long tmp_limit = strtol(optarg, NULL, 10);
       if (!tmp_limit) {
         fprintf(stderr, "Option n argument must be a number. '%s' given.\n",
