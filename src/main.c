@@ -5,20 +5,23 @@
 #include <stdlib.h>
 #include <string.h>
 
+// Filtering options structure.
 typedef struct {
-  bool tcp;
-  bool udp;
-  bool arp;
-  bool icmp4;
-  bool icmp6;
-  bool igmp;
-  bool mld;
+  bool tcp;   // TCP filter flag.
+  bool udp;   // UDP filter flag.
+  bool arp;   // ARP filter flag.
+  bool icmp4; // ICMPv4 filter flag.
+  bool icmp6; // ICMPv6 filter flag.
+  bool igmp;  // IGMP filter flag.
+  bool mld;   // MLD filter flag.
 } filter_t;
 
+// Print a list of available network interfaces.
 void list_interfaces() {
   // TODO: Print list of available interfaces
 }
 
+// Print usage instructions
 void print_help(char *name) {
   printf("Usage: %s [-i interface | --interface interface] "
          "{-p|--port-source|--port-destination port [--tcp|-t] [--udp|-u]} "
@@ -27,21 +30,22 @@ void print_help(char *name) {
 }
 
 int main(int argc, char *argv[]) {
-  char *interface = NULL;
-  int port = -1;
-  filter_t filter = {false};
-  int limit = 1;
+  char *interface = NULL; // Selected interface.
+  int port = -1; // Port number to filter for.
+  filter_t filter = {false}; // Filter options.
+  int limit = 1;  // Number of results.
 
   // If there's no option specified, list available interfaces.
   if (argc == 1)
     list_interfaces();
 
-  // If there's only interface with no value specified, list available
+  // If there's only interface with no value specified, list available.
   // interfaces.
   if (argc == 2 &&
       (strcmp("-i", argv[0]) == 0 || strcmp("--interface", argv[0]) == 0))
     list_interfaces();
 
+  // Definition of available long options.
   static const struct option long_options[] = {
       {"help",      no_argument,       NULL, 'h'},
       {"interface", required_argument, NULL, 'i'},
@@ -56,6 +60,7 @@ int main(int argc, char *argv[]) {
       {0,           0,                 0,    0  },
   };
 
+  // Parse options using getopt_long.
   int option_index = 0;
   for (int c; (c = getopt_long(argc, argv, "hi:p:tu01234n:", long_options,
                                &option_index)) != -1;) {
