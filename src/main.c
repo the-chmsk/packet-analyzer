@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
   filter_t filter = {false};
   int limit = 1;
 
-  // If thre's no option specified, list available interfaces.
+  // If there's no option specified, list available interfaces.
   if (argc == 1)
     list_interfaces();
 
