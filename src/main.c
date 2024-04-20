@@ -1,3 +1,22 @@
+/*
+ * This file is part of NetworkSniffer.
+ *
+ * Copyright (C) 2024  Oliver Ulrich
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 #include <ctype.h>
 #include <getopt.h>
 #include <stdbool.h>
@@ -30,10 +49,10 @@ void print_help(char *name) {
 }
 
 int main(int argc, char *argv[]) {
-  char *interface = NULL; // Selected interface.
-  int port = -1; // Port number to filter for.
+  char *interface = NULL;    // Selected interface.
+  int port = -1;             // Port number to filter for.
   filter_t filter = {false}; // Filter options.
-  int limit = 1;  // Number of results.
+  int limit = 1;             // Number of results.
 
   // If there's no option specified, list available interfaces.
   if (argc == 1)
