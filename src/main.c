@@ -19,6 +19,7 @@
 
 #include <ctype.h>
 #include <getopt.h>
+#include <pcap.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,7 +38,18 @@ typedef struct {
 
 // Print a list of available network interfaces.
 void list_interfaces() {
-  // TODO: Print list of available interfaces
+  pcap_if_t *alldevsp = NULL;
+  char *errbuf = NULL;
+
+  if (pcap_findalldevs(&alldevsp, errbuf)) {
+    fprintf(stderr, "%s\n", errbuf);
+    exit(EXIT_FAILURE);
+  }
+
+  for (pcap_if_t *devsp = alldevsp; devsp != NULL; devsp = devsp->next)
+    printf("%s\n", devsp->name);
+
+  pcap_freealldevs(alldevsp);
 }
 
 // Print usage instructions
@@ -55,14 +67,18 @@ int main(int argc, char *argv[]) {
   int limit = 1;             // Number of results.
 
   // If there's no option specified, list available interfaces.
-  if (argc == 1)
+  if (argc == 1) {
     list_interfaces();
+    return EXIT_SUCCESS;
+  }
 
   // If there's only interface with no value specified, list available.
   // interfaces.
   if (argc == 2 &&
-      (strcmp("-i", argv[0]) == 0 || strcmp("--interface", argv[0]) == 0))
+      (strcmp("-i", argv[1]) == 0 || strcmp("--interface", argv[1]) == 0)) {
     list_interfaces();
+    return EXIT_SUCCESS;
+  }
 
   // Definition of available long options.
   static const struct option long_options[] = {
