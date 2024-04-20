@@ -52,6 +52,27 @@ void list_interfaces() {
   pcap_freealldevs(alldevsp);
 }
 
+// Check if given interface can be opened with pcap_create().
+// Return true if interface is valid, otherwise return false.
+bool validate_interface(char *interface) {
+  pcap_if_t *alldevs = NULL;
+  char *errbuf = NULL;
+
+  if (pcap_findalldevs(&alldevs, errbuf)) {
+    fprintf(stderr, "%s\n", errbuf);
+    exit(EXIT_FAILURE);
+  }
+
+  bool found = 0;
+  for (pcap_if_t *devs = alldevs; devs != NULL; devs = devs->next) {
+    found = strcmp(interface, devs->name) == 0;
+    if (found)
+      break;
+  }
+
+  return found;
+}
+
 // Print usage instructions
 void print_help(char *name) {
   printf("Usage: %s [-i interface | --interface interface] "
@@ -104,6 +125,9 @@ int main(int argc, char *argv[]) {
       print_help(argv[0]);
       break;
     case 'i':
+      if (!validate_interface(optarg)) {
+        fprintf(stderr, "Invalid argument for option -i/--interface. (%s)\n", optarg);
+      }
       interface = optarg;
       break;
     case 'p':
