@@ -1,5 +1,5 @@
 /*
- * This file is part of NetworkSniffer.
+ * This file is part of packet-analyzer.
  *
  * Copyright (C) 2024  Oliver Ulrich
  *
@@ -126,8 +126,7 @@ int main(int argc, char *argv[]) {
       break;
     case 'i':
       if (!validate_interface(optarg)) {
-        fprintf(stderr, "Invalid argument for option -i/--interface. (%s)\n",
-                optarg);
+        fprintf(stderr, "Invalid argument for option -i/--interface. (%s)\n", optarg);
       }
       interface = optarg;
       break;
