@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "printer.h"
 
 // Filtering options structure.
 typedef struct {
@@ -185,6 +186,8 @@ int main(int argc, char *argv[]) {
     fprintf(stderr, "%s\n", errbuf);
     return EXIT_FAILURE;
   }
+
+  pcap_loop(handle, -1, print_packet, NULL);
 
   return EXIT_SUCCESS;
 }
