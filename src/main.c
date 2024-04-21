@@ -126,7 +126,8 @@ int main(int argc, char *argv[]) {
       break;
     case 'i':
       if (!validate_interface(optarg)) {
-        fprintf(stderr, "Invalid argument for option -i/--interface. (%s)\n", optarg);
+        fprintf(stderr, "Invalid argument for option -i/--interface. (%s)\n",
+                optarg);
       }
       interface = optarg;
       break;
@@ -171,6 +172,19 @@ int main(int argc, char *argv[]) {
     default:
       break;
     }
+  }
+
+  // Buffer for storing pcap error messages.
+  char errbuf[PCAP_ERRBUF_SIZE];
+
+  // Obtain a packet capture handle.
+  // https://www.tcpdump.org/manpages/pcap_open_live.3pcap.html
+  pcap_t *handle = pcap_open_live(interface, 262144, 1, 0, errbuf);
+
+  // Check if handle was obtained successfully, if not print error.
+  if (handle == NULL) {
+    fprintf(stderr, "%s\n", errbuf);
+    return EXIT_FAILURE;
   }
 
   return EXIT_SUCCESS;
