@@ -54,7 +54,7 @@ void sb_append_string(sb_t *sb, const char *str) {
 
   strcpy(&((*sb)->buf[(*sb)->pos]), str);
 
-  (*sb)->pos += size + 1;
+  (*sb)->pos += size;
 }
 
 void sb_append_char(sb_t *sb, const char c) {
