@@ -250,6 +250,7 @@ int main(int argc, char *argv[]) {
   bpf_u_int32 net;
   bpf_u_int32 mask;
   struct bpf_program fp;
+  int dt;
 
   if (pcap_lookupnet(interface, &net, &mask, errbuf) == -1) {
     fprintf(stderr, "Can't get netmask for device %s\n", interface);
@@ -267,7 +268,16 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
-   pcap_set_datalink(handle, DLT_EN10MB);
+  // Obtain handle datalink.
+  dt = pcap_datalink(handle);
+
+  if (dt == PCAP_ERROR_NOT_ACTIVATED) {
+    fprintf(stderr, "Trying to obtain datalink on inactivated handle.");
+    return EXIT_FAILURE;
+  }
+
+  // Set datalink.
+   pcap_set_datalink(handle, dt);
 
   char *filter_string = build_filter_string(&filter);
 

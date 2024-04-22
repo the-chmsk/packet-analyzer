@@ -92,6 +92,13 @@ struct header_tcp {
   unsigned short urp;   // Urgent pointer.
 };
 
+struct header_udp {
+  u_int16_t sport;
+  u_int16_t dport;
+  u_int16_t len;
+  u_int16_t sum;
+};
+
 // Format time in ISO8601 format.
 void print_timestamp(const struct timeval *tv) {
   char buf[31];
@@ -122,7 +129,7 @@ void print_ethernet(const struct header_ethernet *eth) {
   printf("dst MAC: %02X:%02X:%02X:%02X:%02X:%02X\n", eth->dhost[0],
          eth->dhost[1], eth->dhost[2], eth->dhost[3], eth->dhost[4],
          eth->dhost[5]);
-  printf("type: 0x%04x\n", eth->type);
+  printf("type: 0x%04x\n", ntohs(eth->type));
 
   printf("\n");
 }
@@ -182,6 +189,13 @@ void print_arp(struct header_arp *arp) {
   printf("hardware type: %u\n", arp->htype);
 }
 
+// Print UDP header.
+void print_udp(struct header_udp *udp) {
+  printf("User Datagram Protocol:\n");
+  printf("src port: %u\n", udp->sport);
+  printf("dst port: %u\n", udp->dport);
+}
+
 void print_packet(unsigned char *args, const struct pcap_pkthdr *header,
                   const unsigned char *packet) {
   struct header_ethernet *eth = (struct header_ethernet *)(packet);
@@ -189,9 +203,9 @@ void print_packet(unsigned char *args, const struct pcap_pkthdr *header,
   print_timestamp(&header->ts);
   print_ethernet(eth);
 
-  if (eth->type == ETH_TYPE_ARP) {
+  if (ntohs(eth->type) == ETH_P_ARP) {
     print_arp((struct header_arp *)(packet + SIZE_ETHERNET));
-  } else if (eth->type == ETH_TYPE_IP) {
+  } else if (ntohs(eth->type) == ETH_P_IP || ntohs(eth->type) == ETH_P_IPV6) {
     const struct header_ip *ip = (struct header_ip *)(packet + SIZE_ETHERNET);
 
     unsigned int size_ip = IP_HL(ip) * 4;
@@ -203,7 +217,9 @@ void print_packet(unsigned char *args, const struct pcap_pkthdr *header,
       // Obtain and print TCP header.
       print_tcp((struct header_tcp *)(packet + SIZE_ETHERNET + size_ip));
       break;
-
+    case IPPROTO_UDP:
+      print_udp((struct header_udp *)(packet + SIZE_ETHERNET + size_ip));
+      break;
     default:
       break;
     }

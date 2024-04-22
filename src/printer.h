@@ -29,6 +29,7 @@
 #include <string.h>
 #include <time.h>
 #include <ctype.h>
+#include <arpa/inet.h>
 
 void print_packet(unsigned char *args, const struct pcap_pkthdr *header, const unsigned char *packet);
 
