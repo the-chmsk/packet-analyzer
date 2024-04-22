@@ -283,12 +283,14 @@ int main(int argc, char *argv[]) {
 
   printf("%s\n", filter_string);
 
+  // Compile pcap filter.
   if (pcap_compile(handle, &fp, filter_string, 0, net) == -1) {
     fprintf(stderr, "Couldn't parse filter %s: %s\n", filter_string,
             pcap_geterr(handle));
     return EXIT_FAILURE;
   }
 
+  // Apply pcap filter.
   if (pcap_setfilter(handle, &fp) == -1) {
     fprintf(stderr, "Couldn't install filter %s: %s\n", filter_string,
             pcap_geterr(handle));
