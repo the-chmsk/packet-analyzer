@@ -26,7 +26,7 @@ dir:
 clean:
 	rm -rf $(ODIR) $(BDIR)
 
-run: ($TARGET)
+run: $(TARGET)
 	./bin/packet-analyzer
 
 .PHONY: all clean
