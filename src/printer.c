@@ -118,25 +118,35 @@ void print_tcp(const struct header_tcp *tcp) {
 // Print frame in "byte_offset: byte_offset_hexa byte_offset_ascii" format. 
 void print_frame(const unsigned char *packet, size_t size) {
   for (size_t offset = 0; offset < size; offset += 0x10) {
-    printf("0x%04lX:", offset);
+    printf("0x%04lX:  ", offset);
 
-    for (size_t i = 0; i < 0x10 && i + offset < size; i++) {
+    for (size_t i = 0; i < 0x10; i++) {
+      if (offset + i > size) {
+        printf("   ");
+        continue;
+      }
+
       printf(" %02x", (unsigned int)*(packet + offset + i));
-      if (i == 0x8)
+      if (i == 0x7)
         printf(" ");
     }
 
-    printf(" ");
+    printf("   ");
 
-    for (size_t i = 0; i < 0x10 && i + offset < size; i++) {
+    for (size_t i = 0; i < 0x10; i++) {
+
+       if (offset + i > size) {
+        printf(" ");
+        continue;
+      }
 
       unsigned char c = *(packet + offset + i);
 
       if (!isprint(c))
         c = '.';
 
-      printf(" %c", c);
-      if (i == 0x8)
+      printf("%c", c);
+      if (i == 0x7)
         printf(" ");
     }
 
