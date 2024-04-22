@@ -155,12 +155,6 @@ void print_packet(unsigned char *args, const struct pcap_pkthdr *header,
   print_ethernet(eth);
   print_ip(ip);
 
-  if (ip->prot == IPPROTO_TCP) {
-    const struct header_tcp *tcp =
-        (struct header_tcp *)(packet + SIZE_ETHERNET + size_ip);
-    print_tcp(tcp);
-  }
-
   switch (ip->prot) {
   case IPPROTO_TCP:
     // Obtain and print TCP header.

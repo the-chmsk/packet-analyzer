@@ -17,6 +17,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "printer.h"
+#include "strbldr.h"
 #include <ctype.h>
 #include <getopt.h>
 #include <pcap.h>
@@ -24,8 +26,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "printer.h"
-#include "strbldr.h"
 
 // Filtering options structure.
 typedef struct {
@@ -36,6 +36,7 @@ typedef struct {
   bool icmp6; // ICMPv6 filter flag.
   bool igmp;  // IGMP filter flag.
   bool mld;   // MLD filter flag.
+  bool ndp;   // NDP filter flag.
 } filter_t;
 
 // Print a list of available network interfaces.
@@ -83,6 +84,65 @@ void print_help(char *name) {
          name);
 }
 
+char *build_filter_string(filter_t *f) {
+  sb_t sb = sb_create();
+
+  if (f->tcp)
+    sb_append_string(&sb, "tcp");
+
+  if (f->udp) {
+    if (f->tcp)
+      sb_append_string(&sb, " or ");
+    sb_append_string(&sb, "udp");
+  }
+
+  if (f->arp) {
+    if (f->tcp || f->udp)
+      sb_append_string(&sb, " or ");
+    sb_append_string(&sb, "arp");
+  }
+
+  if (f->icmp4) {
+    if (f->tcp || f->udp || f->arp)
+      sb_append_string(&sb, " or ");
+    sb_append_string(&sb, "icmp");
+  }
+
+  if (f->icmp6) {
+    if (f->tcp || f->udp || f->arp || f->icmp4)
+      sb_append_string(&sb, " or ");
+    sb_append_string(&sb, "icmp6");
+  }
+
+  if (f->igmp) {
+    if (f->tcp || f->udp || f->arp || f->icmp4 || f->icmp6)
+      sb_append_string(&sb, " or ");
+    sb_append_string(&sb, "igmp");
+  }
+
+  if (f->mld) {
+    if (f->tcp || f->udp || f->arp || f->icmp4 || f->icmp6 || f->igmp)
+      sb_append_string(&sb, " or ");
+    sb_append_string(&sb, "icmp6[icmp6type] = 130 or icmp6[icmp6type] = 131 or "
+                          "icmp6[icmp6type] = 143 or icmp6[icmp6type] = 132");
+  }
+
+  if (f->ndp) {
+    if (f->tcp || f->udp || f->arp || f->icmp4 || f->icmp6 || f->igmp || f->mld)
+      sb_append_string(&sb, " or ");
+    sb_append_string(
+        &sb,
+        "icmp6[icmp6type] = 133 or icmp6[icmp6type] = 134 or icmp6[icmp6type] "
+        "= 135 or icmp6[icmp6type] = 136 or icmp6[icmp6type] = 137");
+  }
+
+  char *str = sb_get_string(sb);
+
+  sb_destroy(sb);
+
+  return str;
+}
+
 int main(int argc, char *argv[]) {
   char *interface = NULL;    // Selected interface.
   int port = -1;             // Port number to filter for.
@@ -115,12 +175,13 @@ int main(int argc, char *argv[]) {
       {"icmp6",     no_argument,       0,    0  },
       {"igmp",      no_argument,       0,    0  },
       {"mld",       no_argument,       0,    0  },
+      {"ndp",       no_argument,       0,    0  },
       {0,           0,                 0,    0  },
   };
 
   // Parse options using getopt_long.
   int option_index = 0;
-  for (int c; (c = getopt_long(argc, argv, "hi:p:tu01234n:", long_options,
+  for (int c; (c = getopt_long(argc, argv, "hi:p:tu012345n:", long_options,
                                &option_index)) != -1;) {
     switch (c) {
     case 'h':
@@ -128,7 +189,8 @@ int main(int argc, char *argv[]) {
       break;
     case 'i':
       if (!validate_interface(optarg)) {
-        fprintf(stderr, "Invalid argument for option -i/--interface. (%s)\n", optarg);
+        fprintf(stderr, "Invalid argument for option -i/--interface. (%s)\n",
+                optarg);
       }
       interface = optarg;
       break;
@@ -139,6 +201,12 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
       }
       port = (int)tmp_port;
+      break;
+    case 't':
+      filter.tcp = true;
+      break;
+    case 'u':
+      filter.udp = true;
       break;
     case '0':
       filter.arp = true;
@@ -154,6 +222,9 @@ int main(int argc, char *argv[]) {
       break;
     case '4':
       filter.mld = true;
+      break;
+    case '5':
+      filter.ndp = true;
       break;
     case 'n':
       long tmp_limit = strtol(optarg, NULL, 10);
@@ -175,8 +246,16 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  // Buffer for storing pcap error messages.
   char errbuf[PCAP_ERRBUF_SIZE];
+  bpf_u_int32 net;
+  bpf_u_int32 mask;
+  struct bpf_program fp;
+
+  if (pcap_lookupnet(interface, &net, &mask, errbuf) == -1) {
+    fprintf(stderr, "Can't get netmask for device %s\n", interface);
+    net = 0;
+    mask = 0;
+  }
 
   // Obtain a packet capture handle.
   // https://www.tcpdump.org/manpages/pcap_open_live.3pcap.html
@@ -188,7 +267,23 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
-  pcap_loop(handle, -1, print_packet, NULL);
+  char *filter_string = build_filter_string(&filter);
+
+  printf("%s\n", filter_string);
+
+  if (pcap_compile(handle, &fp, filter_string, 0, net) == -1) {
+    fprintf(stderr, "Couldn't parse filter %s: %s\n", filter_string,
+            pcap_geterr(handle));
+    return EXIT_FAILURE;
+  }
+
+  if (pcap_setfilter(handle, &fp) == -1) {
+    fprintf(stderr, "Couldn't install filter %s: %s\n", filter_string,
+            pcap_geterr(handle));
+    return EXIT_FAILURE;
+  }
+
+  pcap_loop(handle, limit, print_packet, NULL);
 
   return EXIT_SUCCESS;
 }
