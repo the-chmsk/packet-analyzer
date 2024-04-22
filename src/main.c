@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "printer.h"
+#include "strbldr.h"
 
 // Filtering options structure.
 typedef struct {
