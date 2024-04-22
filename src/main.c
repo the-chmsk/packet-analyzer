@@ -208,7 +208,7 @@ int main(int argc, char *argv[]) {
     case 'u':
       filter.udp = true;
       break;
-    case '0':
+    case 0:
       filter.arp = true;
       break;
     case '1':
@@ -266,6 +266,8 @@ int main(int argc, char *argv[]) {
     fprintf(stderr, "%s\n", errbuf);
     return EXIT_FAILURE;
   }
+
+   pcap_set_datalink(handle, DLT_EN10MB);
 
   char *filter_string = build_filter_string(&filter);
 

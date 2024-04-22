@@ -23,6 +23,7 @@
 
 #include <pcap.h>
 #include <netinet/in.h>
+#include <netinet/ether.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

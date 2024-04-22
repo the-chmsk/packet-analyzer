@@ -19,8 +19,14 @@
 
 #include "printer.h"
 
-#define ETH_ADDR_LEN 6
 #define SIZE_ETHERNET 14 // Ethernet headers are always exactly 14 bytes.
+
+#define ETH_ADDR_LEN 6
+#define ETH_TYPE_IP 0x0800
+#define ETH_TYPE_ARP 0x0806 // Ethernet ARP type.
+
+#define ARP_HW_ADDR_LEN 6
+#define ARP_IP_ADDR_LEN 4
 
 #define IP_RF 0x8000      // Reserved fragment flag.
 #define IP_DF 0x4000      // Dont fragment flag.
@@ -43,10 +49,22 @@
 
 typedef unsigned int tcp_seq;
 
-struct header_ethernet {
-  unsigned char dhost[ETH_ADDR_LEN]; // Destination host address.
-  unsigned char shost[ETH_ADDR_LEN]; // Source host address.
-  unsigned short type;               // IP? ARP? RARP? etc.
+struct __attribute__((packed)) header_ethernet {
+  uint8_t dhost[ETH_ADDR_LEN]; // Destination host address.
+  uint8_t shost[ETH_ADDR_LEN]; // Source host address.
+  uint16_t type;               // IP? ARP? RARP? etc.
+};
+
+struct __attribute__((packed)) header_arp {
+  uint16_t htype;               // Hardware type.
+  uint16_t ptype;               // Protocol type.
+  uint8_t halen;                // Hardware address length.
+  uint8_t palen;                // Protocol address length.
+  uint16_t opcode;              // Operation code.
+  uint8_t sha[ARP_HW_ADDR_LEN]; // Sender hardware address.
+  uint8_t sia[ARP_IP_ADDR_LEN]; // Sender IP address.
+  uint8_t tha[ARP_HW_ADDR_LEN]; // Target hardware address.
+  uint8_t tia[ARP_IP_ADDR_LEN]; // Target IP address.
 };
 
 struct header_ip {
@@ -95,6 +113,8 @@ void print_timestamp(const struct timeval *tv) {
 }
 
 void print_ethernet(const struct header_ethernet *eth) {
+  printf("Ethernet II:\n");
+
   // Print formatted mac addresses.
   printf("src MAC: %02X:%02X:%02X:%02X:%02X:%02X\n", eth->shost[0],
          eth->shost[1], eth->shost[2], eth->shost[3], eth->shost[4],
@@ -102,6 +122,9 @@ void print_ethernet(const struct header_ethernet *eth) {
   printf("dst MAC: %02X:%02X:%02X:%02X:%02X:%02X\n", eth->dhost[0],
          eth->dhost[1], eth->dhost[2], eth->dhost[3], eth->dhost[4],
          eth->dhost[5]);
+  printf("type: 0x%04x\n", eth->type);
+
+  printf("\n");
 }
 
 // Print IP header data.
@@ -115,7 +138,7 @@ void print_tcp(const struct header_tcp *tcp) {
   printf("dst port: %hu\n", tcp->dport);
 }
 
-// Print frame in "byte_offset: byte_offset_hexa byte_offset_ascii" format. 
+// Print frame in "byte_offset: byte_offset_hexa byte_offset_ascii" format.
 void print_frame(const unsigned char *packet, size_t size) {
   for (size_t offset = 0; offset < size; offset += 0x10) {
     printf("0x%04lX:  ", offset);
@@ -135,7 +158,7 @@ void print_frame(const unsigned char *packet, size_t size) {
 
     for (size_t i = 0; i < 0x10; i++) {
 
-       if (offset + i > size) {
+      if (offset + i > size) {
         printf(" ");
         continue;
       }
@@ -154,25 +177,36 @@ void print_frame(const unsigned char *packet, size_t size) {
   }
 }
 
+void print_arp(struct header_arp *arp) {
+  printf("Address Resolution Protocol (ARP Probe)\n");
+  printf("hardware type: %u\n", arp->htype);
+}
+
 void print_packet(unsigned char *args, const struct pcap_pkthdr *header,
                   const unsigned char *packet) {
-  const struct header_ethernet *eth = (struct header_ethernet *)(packet);
-  const struct header_ip *ip = (struct header_ip *)(packet + SIZE_ETHERNET);
-
-  unsigned int size_ip = IP_HL(ip) * 4;
+  struct header_ethernet *eth = (struct header_ethernet *)(packet);
 
   print_timestamp(&header->ts);
   print_ethernet(eth);
-  print_ip(ip);
 
-  switch (ip->prot) {
-  case IPPROTO_TCP:
-    // Obtain and print TCP header.
-    print_tcp((struct header_tcp *)(packet + SIZE_ETHERNET + size_ip));
-    break;
+  if (eth->type == ETH_TYPE_ARP) {
+    print_arp((struct header_arp *)(packet + SIZE_ETHERNET));
+  } else if (eth->type == ETH_TYPE_IP) {
+    const struct header_ip *ip = (struct header_ip *)(packet + SIZE_ETHERNET);
 
-  default:
-    break;
+    unsigned int size_ip = IP_HL(ip) * 4;
+
+    print_ip(ip);
+
+    switch (ip->prot) {
+    case IPPROTO_TCP:
+      // Obtain and print TCP header.
+      print_tcp((struct header_tcp *)(packet + SIZE_ETHERNET + size_ip));
+      break;
+
+    default:
+      break;
+    }
   }
 
   printf("\n");
